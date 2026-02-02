@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Be My Valentine?</title>
+<style>
+  body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: #ffccd5;
+    font-family: 'Arial', sans-serif;
+    overflow: hidden;
+    flex-direction: column;
+  }
+
+  h1 {
+    color: #d6336c;
+    margin-bottom: 50px;
+    text-align: center;
+  }
+
+  .button-container {
+    position: relative;
+    width: 300px;
+    height: 100px;
+  }
+
+  button {
+    padding: 15px 30px;
+    font-size: 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    position: absolute;
+    transition: transform 0.1s, box-shadow 0.2s;
+  }
+
+  #yesBtn {
+    background-color: #d6336c;
+    color: white;
+    left: 50px;
+    top: 20px;
+  }
+
+  #noBtn {
+    background-color: #6c757d;
+    color: white;
+    left: 180px;
+    top: 20px;
+  }
+
+  #yesBtn:hover {
+    animation: shake 0.3s infinite;
+    box-shadow: 0 0 20px #ff6fa3, 0 0 30px #ff4f91;
+  }
+
+  @keyframes shake {
+    0% { transform: translate(1px, 1px) rotate(0deg); }
+    10% { transform: translate(-1px, -2px) rotate(-1deg); }
+    20% { transform: translate(-3px, 0px) rotate(1deg); }
+    30% { transform: translate(3px, 2px) rotate(0deg); }
+    40% { transform: translate(1px, -1px) rotate(1deg); }
+    50% { transform: translate(-1px, 2px) rotate(-1deg); }
+    60% { transform: translate(-3px, 1px) rotate(0deg); }
+    70% { transform: translate(3px, 1px) rotate(-1deg); }
+    80% { transform: translate(-1px, -1px) rotate(1deg); }
+    90% { transform: translate(1px, 2px) rotate(0deg); }
+    100% { transform: translate(1px, -2px) rotate(-1deg); }
+  }
+
+  canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+  }
+
+  #message {
+    position: fixed;
+    top: 40%;
+    width: 100%;
+    text-align: center;
+    font-size: 48px;
+    color: #ff4f91;
+    text-shadow: 2px 2px 10px #fff;
+    display: none;
+    pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<h1>Will you be my Valentine? 💖</h1>
+<div class="button-container">
+  <button id="yesBtn">Yes!</button>
+  <button id="noBtn">No</button>
+</div>
+
+<canvas id="fireworksCanvas"></canvas>
+<canvas id="heartsCanvas"></canvas>
+<div id="message">Smriti, You said YES! 💖</div>
+
+<script>
+// Super sneaky No button
+const noBtn = document.getElementById('noBtn');
+const container = document.querySelector('.button-container');
+
+document.addEventListener('mousemove', (e) => {
+  const rect = noBtn.getBoundingClientRect();
+  const mouseX = e.clientX;
+  const mouseY = e.clientY;
+
+  const distanceX = mouseX - (rect.left + rect.width / 2);
+  const distanceY = mouseY - (rect.top + rect.height / 2);
+  const distance = Math.sqrt(distanceX*distanceX + distanceY*distanceY);
+
+  if(distance < 100){
+    const maxX = container.clientWidth - noBtn.clientWidth;
+    const maxY = container.clientHeight - noBtn.clientHeight;
+
+    let newX, newY;
+    do {
+      newX = Math.floor(Math.random() * maxX);
+      newY = Math.floor(Math.random() * maxY);
+    } while(Math.abs(newX - rect.left) < 50 && Math.abs(newY - rect.top) < 50);
+
+    noBtn.style.left = newX + 'px';
+    noBtn.style.top = newY + 'px';
+  }
+});
+
+// Fireworks setup
+const fireworksCanvas = document.getElementById('fireworksCanvas');
+const ctx = fireworksCanvas.getContext('2d');
+fireworksCanvas.width = window.innerWidth;
+fireworksCanvas.height = window.innerHeight;
+
+// Floating hearts setup
+const heartsCanvas = document.getElementById('heartsCanvas');
+const hctx = heartsCanvas.getContext('2d');
+heartsCanvas.width = window.innerWidth;
+heartsCanvas.height = window.innerHeight;
+
+window.addEventListener('resize', () => {
+  fireworksCanvas.width = window.innerWidth;
+  fireworksCanvas.height = window.innerHeight;
+  heartsCanvas.width = window.innerWidth;
+  heartsCanvas.height = window.innerHeight;
+});
+
+// Fireworks particles
+let fireworks = [];
+class Particle {
+  constructor(x, y, vx, vy, color, isHeart=false) {
+    this.x = x; this.y = y;
+    this.vx = vx; this.vy = vy;
+    this.alpha = 1; this.color = color; this.isHeart = isHeart;
+  }
+  update() { this.x += this.vx; this.y += this.vy; this.alpha -= 0.02; }
+  draw(ctx) {
+    ctx.globalAlpha = this.alpha;
+    ctx.fillStyle = this.color;
+    ctx.beginPath();
+    if(this.isHeart){
+      const size = 6;
+      ctx.moveTo(this.x, this.y);
+      ctx.bezierCurveTo(this.x, this.y - size, this.x - size, this.y - size, this.x - size, this.y);
+      ctx.bezierCurveTo(this.x - size, this.y + size, this.x, this.y + size*1.5, this.x, this.y + size*2);
+      ctx.bezierCurveTo(this.x, this.y + size*1.5, this.x + size, this.y + size, this.x + size, this.y);
+      ctx.bezierCurveTo(this.x + size, this.y - size, this.x, this.y - size, this.x, this.y);
+      ctx.fill();
+    } else {
+      ctx.arc(this.x, this.y, 3, 0, Math.PI*2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  isDone() { return this.alpha <= 0; }
+}
+
+class Firework {
+  constructor(x, y){
+    this.particles = [];
+    const total = 50 + Math.floor(Math.random()*50);
+    for(let i=0;i<total;i++){
+      const angle = Math.random()*2*Math.PI;
+      const speed = Math.random()*5 + 2;
+      const vx = Math.cos(angle)*speed;
+      const vy = Math.sin(angle)*speed;
+      const color = `hsl(${Math.random()*360},100%,50%)`;
+      const isHeart = Math.random()<0.2;
+      this.particles.push(new Particle(x,y,vx,vy,color,isHeart));
+    }
+  }
+  update(){ this.particles.forEach(p=>p.update()); this.particles=this.particles.filter(p=>!p.isDone()); }
+  draw(ctx){ this.particles.forEach(p=>p.draw(ctx)); }
+  isDone(){ return this.particles.length===0; }
+}
+
+function animateFireworks(){
+  ctx.fillStyle='rgba(0,0,0,0.15)';
+  ctx.fillRect(0,0,fireworksCanvas.width,fireworksCanvas.height);
+  fireworks.forEach(fw=>{ fw.update(); fw.draw(ctx); });
+  fireworks = fireworks.filter(fw=>!fw.isDone());
+  requestAnimationFrame(animateFireworks);
+}
+animateFireworks();
+
+// Floating hearts
+let floatingHearts = [];
+function createFloatingHeart(){
+  const x = Math.random()*window.innerWidth;
+  const y = window.innerHeight + 20;
+  const size = 5 + Math.random()*5;
+  const speed = 0.5 + Math.random();
+  const color = `hsl(${Math.random()*360},100%,70%)`;
+  floatingHearts.push({x,y,size,speed,color});
+}
+for(let i=0;i<30;i++) createFloatingHeart();
+
+function animateHearts(){
+  hctx.clearRect(0,0,heartsCanvas.width,heartsCanvas.height);
+  floatingHearts.forEach(h=>{
+    h.y -= h.speed;
+    h.x += Math.sin(h.y*0.05)*0.5;
+    hctx.fillStyle=h.color;
+    hctx.beginPath();
+    const size = h.size; const x = h.x, y = h.y;
+    hctx.moveTo(x,y);
+    hctx.bezierCurveTo(x,y-size,x-size,y-size,x-size,y);
+    hctx.bezierCurveTo(x-size,y+size,x,y+size*1.5,x,y+size*2);
+    hctx.bezierCurveTo(x,y+size*1.5,x+size,y+size,x+size,y);
+    hctx.bezierCurveTo(x+size,y-size,x,y-size,x,y);
+    hctx.fill();
+    if(h.y+size*2<0){ h.y=window.innerHeight+20; h.x=Math.random()*window.innerWidth; }
+  });
+  requestAnimationFrame(animateHearts);
+}
+animateHearts();
+
+// Yes button fireworks + personalized grand heart
+const yesBtn = document.getElementById('yesBtn');
+const message = document.getElementById('message');
+
+yesBtn.addEventListener('click', () => {
+  // Fireworks
+  for(let i=0;i<5;i++){
+    const x = Math.random()*window.innerWidth;
+    const y = Math.random()*window.innerHeight/2;
+    fireworks.push(new Firework(x,y));
+  }
+  
+  // Show big heart + personalized message
+  message.style.display = 'block';
+  let heartSize = 0;
+  const maxSize = 300;
+  const heartInterval = setInterval(()=>{
+    heartSize += 5;
+    message.style.fontSize = heartSize + 'px';
+    if(heartSize >= maxSize){
+      clearInterval(heartInterval);
+      setTimeout(()=>{ message.style.display='none'; }, 3000);
+    }
+  }, 30);
+});
+</script>
+</body>
+</html>
